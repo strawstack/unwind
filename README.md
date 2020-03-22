@@ -1,6 +1,6 @@
 # Unwind
 
-A game written in [D3js](https://d3js.org) about unwinding a grid of numbers
+A game written in [D3](https://d3js.org) about unwinding a grid of numbers
 
 # Live Demo
 
