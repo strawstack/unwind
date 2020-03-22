@@ -8,4 +8,4 @@ A game written in [D3](https://d3js.org) about unwinding a grid of numbers
 
 # Screenshot
 
-[![](./screenshot2.png)](#)
+[![](./screenshot.png)](#)
