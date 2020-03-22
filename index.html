@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+
+<meta charset="utf-8">
+<head>
+  <!-- Bootstrap -->
+  <!--
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+-->
+
+<style>
+  html{
+    padding: 0px;
+    margin: 0px;
+  }
+  body{
+    padding: 0px;
+    margin: 0px;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  svg{
+    border: #333 solid 8px;
+    border-radius: 35px;
+  }
+
+</style>
+</head>
+<body>
+<div id="container">
+  <svg></svg>
+</div>
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var size = Math.min(document.body.clientWidth, document.body.clientHeight);
+
+var width = size - 8 - 8 - 20, // padding and border
+    height = size - 8 - 8 - 20;
+
+var x = d3.scale.linear()
+    .domain([0, 800])
+    .range([0, width]);
+
+var y = d3.scale.linear()
+.domain([0, 800])
+.range([0, height]);
+
+var svg = d3.select("svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("g");
+
+var rect = svg.append("rect")
+    .attr("class", "back-rect")
+    .attr("fill", "#faf6ec")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", width)
+    .attr("height", height);
+
+// NOTE
+// modify game object to adjust game
+// other constructs refer to game object for
+// application truth
+var game = {
+  "size": 5,
+  "circles": [
+    {
+      "color": "green",
+      "row": 1,
+      "col": 0,
+    },
+    {
+      "color": "red",
+      "row": 2,
+      "col": 0,
+    },
+    {
+      "color": "blue",
+      "row": 0,
+      "col": 1,
+    },
+    {
+      "color": "orange",
+      "row": 4,
+      "col": 2,
+    }
+  ],
+  "numbers": [ [2, 2, 1], [3, 3, 2], [1, 1, 0] ],
+  "refs": [[0, 0, 0], [0, 0, 0], [0, 0, 0]]  // contains refs to game numbers during runtime
+};
+
+var line = d3.svg.line()
+  .x(function(d) {
+    return x(d.x);
+  })
+  .y(function(d) {
+    return y(d.y);
+  });
+
+var space = 800 / game["size"];
+
+// dotted rows
+for(var i=1; i<=game["size"]-1; i++){
+  svg.append("path")
+      .attr("class", "line")
+      .attr("stroke", "grey")
+      .style("stroke-dasharray", ("3, 3"))
+      .attr("d", line( [{x: 10, y: space*i}, {x: 790, y:space*i}] ));
+}
+
+// dotted cols
+for(var i=1; i<=game["size"]-1; i++){
+  svg.append("path")
+      .attr("class", "line")
+      .attr("stroke", "grey")
+      .style("stroke-dasharray", ("3, 3"))
+      .attr("d", line( [{x: space*i, y: 10}, {x: space*i, y:790}] ));
+}
+
+// place numbers
+for(var i=0; i<game["size"] - 2; i++){
+  for(var j=0; j<game["size"] - 2; j++){
+    var text = svg.append("text")
+      .attr("x", x(space) * (j+1) + x(space)/2)
+      .attr("y", x(space) * (i+2) - x(40))
+      .attr("text-anchor", "middle")
+      .text( game["numbers"][i][j] )
+      .attr("font-family", "sans-serif")
+      .attr("font-size", x(120) + "px")
+      .attr("fill", "#333");
+    game["refs"][i][j] = text;
+  }
+}
+
+// place circles
+for(var c in game["circles"]){
+  var c = game["circles"][c];
+
+  var factory = function(c, cref){
+    var onclick = function(){
+      var self = c;
+
+      if( c["row"] == 0 || c["row"] == game["size"] - 1){
+        c["row"] = c["row"] == 0 ? game["size"] - 1 : 0;
+
+        // decrement each row in col
+        for(var i=0; i<game["size"]-2; i++){
+          var update = game["numbers"][i][c["col"]-1] - 1;
+          game["numbers"][i][c["col"]-1] = update;
+          game["refs"][i][c["col"]-1].text( update );
+        }
+      }
+
+      if( c["col"] == 0 || c["col"] == game["size"] - 1){
+        c["col"] = c["col"] == 0 ? game["size"] - 1 : 0;
+
+        // decrement each col in row
+        for(var i=0; i<game["size"]-2; i++){
+          var update = game["numbers"][c["row"]-1][i] - 1;
+          game["numbers"][c["row"]-1][i] = update;
+          game["refs"][c["row"]-1][i].text( update );
+        }
+      }
+
+      // preform transition
+      cref.transition()
+        .duration(1000)
+        .ease("bounce")
+        .attr("cx", x(80 + (space * c["col"])))
+        .attr("cy", x(80 + (space * c["row"])))
+
+    }
+    return onclick; // return function from function factory
+  }
+
+  var cref = svg.append("circle")
+      .attr("class", "circle")
+      .attr("fill", c["color"])
+      .attr("cx", x(80 + (space * c["col"])))
+      .attr("cy", x(80 + (space * c["row"])))
+      .attr("r", x(60));
+
+      // function factory returns function with ref to circle
+      cref.on("click", factory(c, cref));
+
+}
+
+
+
+</script>
+</body>
+</html>
